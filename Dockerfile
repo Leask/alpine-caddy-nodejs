@@ -3,14 +3,7 @@
 
 FROM node:current-alpine3.12
 
-LABEL org.opencontainers.image.version=v2.0.0
 LABEL org.opencontainers.image.title=Leask
-LABEL org.opencontainers.image.description="a powerful, enterprise-ready, open source web server with automatic HTTPS written in Go"
-LABEL org.opencontainers.image.url=https://caddyserver.com
-LABEL org.opencontainers.image.documentation=https://caddyserver.com/docs
-LABEL org.opencontainers.image.vendor="Light Code Labs"
-LABEL org.opencontainers.image.licenses=Apache-2.0
-LABEL org.opencontainers.image.source="https://github.com/caddyserver/caddy-docker"
 
 RUN apk add --no-cache ca-certificates mailcap
 RUN set -eux; \
@@ -28,7 +21,7 @@ ADD index.html /app/public/index.html
 ENV CADDY_VERSION v2.0.0
 
 RUN set -eux; \
-    wget -O /tmp/caddy.tar.gz "https://github.com/caddyserver/caddy/releases/download/v2.1.0-beta.1/caddy_2.1.0-beta.1_linux_amd64.tar.gz"; \
+    wget -O /tmp/caddy.tar.gz "https://github.com/caddyserver/caddy/releases/download/v2.0.0/caddy_2.0.0_linux_amd64.tar.gz"; \
     tar x -z -f /tmp/caddy.tar.gz -C /usr/bin caddy; \
     rm -f /tmp/caddy.tar.gz; \
     chmod +x /usr/bin/caddy; \
@@ -49,5 +42,4 @@ EXPOSE 2019
 
 ENTRYPOINT []
 
-CMD caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
-#& node index.js
+CMD caddy run --config /etc/caddy/Caddyfile --adapter caddyfile #& node index.js
