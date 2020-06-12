@@ -1,72 +1,64 @@
-FROM smebberson/alpine-nginx-nodejs
+# https://github.com/nodejs/docker-node/blob/master/14/alpine3.11/Dockerfile
+# https://github.com/caddyserver/caddy-docker/blob/master/alpine/Dockerfile
+
+FROM node:current-alpine
+
 MAINTAINER Leask Wong <i@leaskh.com>
 
-# https://github.com/nodejs/docker-node/blob/master/10/alpine/Dockerfile
-# Build new version of Node.JS
-RUN apk update \
-    && apk upgrade
-ENV NPM_CONFIG_LOGLEVEL info
-ENV NODE_VERSION 10.3.0
-RUN addgroup -g 1000 node \
-    && adduser -u 1000 -G node -s /bin/sh -D node \
-    && apk add --no-cache \
-    libstdc++ \
-    && apk add --no-cache --virtual .build-deps \
-    binutils-gold \
-    curl \
-    g++ \
-    gcc \
-    gnupg \
-    libgcc \
-    linux-headers \
-    make \
-    python \
-    bash \
-    # bash added by @LeaskH
-    # gpg keys listed at https://github.com/nodejs/node#release-team
-    && for key in \
-    94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
-    FD3A5288F042B6850C66B31F09FE44734EB7990E \
-    71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 \
-    DD8F2338BAE7501E3DD5AC78C273792F7D83545D \
-    C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 \
-    B9AE9905FFD7803F25714661B63B535A4C206CA9 \
-    56730D5401028683275BD23C23EFEFE93C4CFFFE \
-    77984A986EBC2AA786BC0F66B01FBB92821C587A \
-    ; do \
-    gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" || \
-    gpg --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" || \
-    gpg --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key" ; \
-    done \
-    && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION.tar.xz" \
-    && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc" \
-    && gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc \
-    && grep " node-v$NODE_VERSION.tar.xz\$" SHASUMS256.txt | sha256sum -c - \
-    && tar -xf "node-v$NODE_VERSION.tar.xz" \
-    && cd "node-v$NODE_VERSION" \
-    && ./configure \
-    && make -j$(getconf _NPROCESSORS_ONLN) \
-    && make install \
-    && echo "apk del .build-deps // DISABLED via echo by @LeaskH" \
-    && cd .. \
-    && rm -Rf "node-v$NODE_VERSION" \
-    && rm "node-v$NODE_VERSION.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt
-# -------
-# ENV YARN_VERSION 1.7.0
-# RUN apk add --no-cache --virtual .build-deps-yarn curl gnupg tar \
-#   && for key in \
-#     6A010C5166006599AA17F08146C2130DFD2497F5 \
-#   ; do \
-#     gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" || \
-#     gpg --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" || \
-#     gpg --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key" ; \
-#   done \
-#   && curl -fsSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz" \
-#   && curl -fsSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz.asc" \
-#   && gpg --batch --verify yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz \
-#   && mkdir -p /opt \
-#   && tar -xzf yarn-v$YARN_VERSION.tar.gz -C /opt/ \
-#   && ln -s /opt/yarn-v$YARN_VERSION/bin/yarn /usr/local/bin/yarn \
-#   && ln -s /opt/yarn-v$YARN_VERSION/bin/yarnpkg /usr/local/bin/yarnpkg \
-#   && rm yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz \
-#   && apk del .build-deps-yarn
+RUN apk add --no-cache ca-certificates mailcap
+
+# https://github.com/caddyserver/dist/commits
+ENV CADDY_DIST_COMMIT 80870b227ded910971ecace4a0c136bf0ef46342
+
+RUN set -eux; \
+    mkdir -p \
+    /config/caddy \
+    /data/caddy \
+    /etc/caddy \
+    /usr/share/caddy \
+    ; \
+    wget -O /etc/caddy/Caddyfile "https://github.com/caddyserver/dist/raw/$CADDY_DIST_COMMIT/config/Caddyfile"; \
+    wget -O /usr/share/caddy/index.html "https://github.com/caddyserver/dist/raw/$CADDY_DIST_COMMIT/welcome/index.html"
+
+# https://github.com/caddyserver/caddy/releases
+ENV CADDY_VERSION v2.0.0
+
+RUN set -eux; \
+    apkArch="$(apk --print-arch)"; \
+    case "$apkArch" in \
+    x86_64)  binArch='amd64'; checksum='3b00c705caa3162750dfea9cacd3f05ae1dda798e346293ba320ee63682a94e5e26c994fee75677324d841962757b098d2f696e4c5a0044131a0cd9b0e54b9fd' ;; \
+    armhf)   binArch='armv6'; checksum='c8d054eed16910a3fe84d275b3705f61dab204572d5afac4ca02e735fc5741823413e749dcaa9055f930cf8bbaf7a7c28e3cec94527d44111e3de7ed990d685f' ;; \
+    armv7)   binArch='armv7'; checksum='786fab05ea32e24d3b36b020087b9e05cac507f5b0677b398730ecbd3559030574c7b0c6ff3950978678ee218afa8b912731a31ce187c28d1c19375c5c742a96' ;; \
+    aarch64) binArch='arm64'; checksum='8864e9bfa0007f2c8fc0823a729b02e8eb53d41857b4b7ce419102e11a225a975420b36e926c754b2247acc286cbb06fcb705f8cc7258ea1c5f3aea0dc3b44f1' ;; \
+    ppc64el|ppc64le) binArch='ppc64le'; checksum='2440fed6d7e240cedc92fd570893ad056195386e369960e1fba3a4de5dbce32871e809841acc926b0cef0afb6ded39073748afe9c39745fb5609472d495d2828' ;; \
+    s390x)   binArch='s390x'; checksum='b09561e089a0d2deeedfccbd8f0a608068dbc986dc7f1118f0a24e50b5173d90482e1105f9e3249381f2d4815ca316fb7e343fed82b75ea2b070c039bd76324b' ;; \
+    *) echo >&2 "error: unsupported architecture ($apkArch)"; exit 1 ;;\
+    esac; \
+    wget -O /tmp/caddy.tar.gz "https://github.com/caddyserver/caddy/releases/download/v2.0.0/caddy_2.0.0_linux_${binArch}.tar.gz"; \
+    echo "$checksum  /tmp/caddy.tar.gz" | sha512sum -c; \
+    tar x -z -f /tmp/caddy.tar.gz -C /usr/bin caddy; \
+    rm -f /tmp/caddy.tar.gz; \
+    chmod +x /usr/bin/caddy; \
+    caddy version
+
+# See https://caddyserver.com/docs/conventions#file-locations for details
+ENV XDG_CONFIG_HOME=/config
+ENV XDG_DATA_HOME=/data
+
+VOLUME /config
+VOLUME /data
+
+LABEL org.opencontainers.image.version=v2.0.0
+LABEL org.opencontainers.image.title=Caddy
+LABEL org.opencontainers.image.description="a powerful, enterprise-ready, open source web server with automatic HTTPS written in Go"
+LABEL org.opencontainers.image.url=https://caddyserver.com
+LABEL org.opencontainers.image.documentation=https://caddyserver.com/docs
+LABEL org.opencontainers.image.vendor="Light Code Labs"
+LABEL org.opencontainers.image.licenses=Apache-2.0
+LABEL org.opencontainers.image.source="https://github.com/caddyserver/caddy-docker"
+
+EXPOSE 80
+EXPOSE 443
+EXPOSE 2019
+
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
