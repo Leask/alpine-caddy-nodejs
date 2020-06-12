@@ -1,0 +1,6 @@
+localhost
+encode zstd gzip
+root * /app/public
+file_server
+reverse_proxy /api/* localhost:8964
+# log stdout
