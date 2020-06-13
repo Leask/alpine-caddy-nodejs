@@ -3,7 +3,7 @@
 
 FROM node:current-alpine3.12
 
-LABEL org.opencontainers.image.title=Leask
+LABEL org.opencontainers.image.title=@LeaskH
 
 RUN apk add --no-cache ca-certificates mailcap
 RUN set -eux; \
@@ -42,4 +42,4 @@ EXPOSE 2019
 
 ENTRYPOINT []
 
-CMD caddy run --config /etc/caddy/Caddyfile --adapter caddyfile #& node index.js
+CMD caddy run --config /etc/caddy/Caddyfile --adapter caddyfile & node index.js
