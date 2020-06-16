@@ -1,7 +1,7 @@
 # https://github.com/nodejs/docker-node/blob/master/14/alpine3.12/Dockerfile
 # https://github.com/caddyserver/caddy-docker/blob/master/alpine/Dockerfile
 
-FROM node:current-alpine3.12
+FROM node:current-alpine
 
 LABEL org.opencontainers.image.title=@LeaskH
 
