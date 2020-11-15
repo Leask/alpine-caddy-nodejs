@@ -1,1 +1,1 @@
-docker build -t leask/alpine-caddy-nodejs .
+docker build --no-cache -t leask/alpine-caddy-nodejs .

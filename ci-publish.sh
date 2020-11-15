@@ -1,2 +1,2 @@
-./build.sh
-./push.sh
+./ci-build.sh
+./ci-push.sh
