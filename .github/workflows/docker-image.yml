@@ -16,6 +16,6 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build the Docker image
         run: |
-          docker build . --file Dockerfile --tag ${{github.repository}}
+          docker build . --file Dockerfile --tag alpine-caddy-nodejs
           docker docker login --username ${{ secrets.DOCKER_USERNAME }} --password ${{ secrets.DOCKER_PASSWORD }}
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{github.repository}}:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/alpine-caddy-nodejs:latest
