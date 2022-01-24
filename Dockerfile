@@ -65,4 +65,4 @@ WORKDIR /app
 
 ENTRYPOINT []
 
-CMD caddy run --config /etc/caddy/Caddyfile --adapter caddyfile & node index.js
+CMD caddy run --config /etc/caddy/Caddyfile --adapter caddyfile & node index.mjs
