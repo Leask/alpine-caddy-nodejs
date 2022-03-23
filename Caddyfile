@@ -3,6 +3,7 @@ encode zstd gzip
 root * /app/public
 file_server
 reverse_proxy /api/* 127.0.0.1:8964
+reverse_proxy /lib/* 127.0.0.1:8964
 log {
 	output stdout
 }
