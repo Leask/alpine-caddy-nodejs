@@ -15,6 +15,7 @@ RUN set -eux; \
 
 ADD Caddyfile /etc/caddy/Caddyfile
 ADD index.html /app/public/index.html
+ADD index.mjs /app/index.mjs
 
 # https://github.com/caddyserver/caddy/releases
 ENV CADDY_VERSION v2.5.0
