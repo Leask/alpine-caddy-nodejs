@@ -1,42 +1,46 @@
-# https://github.com/nodejs/docker-node/blob/main/19/alpine3.17/Dockerfile
+# https://github.com/nodejs/docker-node/blob/main/20/alpine3.17/Dockerfile
 # https://github.com/caddyserver/caddy-docker/blob/master/2.6/alpine/Dockerfile
 
 FROM node:current-alpine
 
-RUN apk add --no-cache ca-certificates mailcap
+RUN apk add --no-cache \
+	ca-certificates \
+	libcap \
+	mailcap
 
 RUN set -eux; \
     mkdir -p \
-    /config/caddy \
-    /data/caddy \
-    /etc/caddy \
-    /usr/share/caddy \
-    /app/public;
+        /config/caddy \
+        /data/caddy \
+        /etc/caddy \
+        /usr/share/caddy \
+        /app/public;
 
 ADD Caddyfile /etc/caddy/Caddyfile
 ADD index.html /app/public/index.html
 ADD index.mjs /app/index.mjs
 
 # https://github.com/caddyserver/caddy/releases
-ENV CADDY_VERSION v2.6.2
+ENV CADDY_VERSION v2.6.4
 
 RUN set -eux; \
-    apkArch="$(apk --print-arch)"; \
-    case "$apkArch" in \
-    x86_64)  binArch='amd64'; checksum='ae18c0facae7c8ee872492a1ba63a4c7608915d6d9fe267aef4f869cf65ebd4b7f9ff57f609aff2bd52db98c761d877b574aea2c0c9ddc2ec53d0d5e174cb542' ;; \
-    armhf)   binArch='armv6'; checksum='6de688e6514df67594635c79be51a3fe3b7b29254b36349955979571d0624dd9bb228abcb798e76fc64ec0e1c4884443c3fd5074a5b5124ee895d29d239bcf1c' ;; \
-    armv7)   binArch='armv7'; checksum='ba2186fd97c2e3f8930ee04bf01774938fc3682365fe4be70d9326f2b2a430f337c617f2c385aaa3d4e6dccb7ba980990d26cdc395574e6a5172c4f74cd9391d' ;; \
-    aarch64) binArch='arm64'; checksum='91b5d50cd5c0dd84bf7dfcc437880df0d39dc62af57574cea2b560000c5bf12ba415b8723c5cb091276a93b979249ff939d567fef3a2a6ed417f93af266effcc' ;; \
-    ppc64el|ppc64le) binArch='ppc64le'; checksum='f8aa3a478a989217a5f4e6b58936d2a69ffb99f2b7625760451ecab6fdc6d2534f815b8414a2121d63cdbea4f92022cebaa8550f9e3a61681ec25893ebf11ee6' ;; \
-    s390x)   binArch='s390x'; checksum='2c8f9b6b28194dcc14db98c0657f6a47f35dbfa6c0a45fc485b488ada7c5b77abb4f880d3763dac1699d1007ba8e0f622a075fc7f394a0f3898fb90883c00407' ;; \
-    *) echo >&2 "error: unsupported architecture ($apkArch)"; exit 1 ;;\
-    esac; \
-    wget -O /tmp/caddy.tar.gz "https://github.com/caddyserver/caddy/releases/download/v2.6.2/caddy_2.6.2_linux_${binArch}.tar.gz"; \
-    echo "$checksum  /tmp/caddy.tar.gz" | sha512sum -c; \
-    tar x -z -f /tmp/caddy.tar.gz -C /usr/bin caddy; \
-    rm -f /tmp/caddy.tar.gz; \
-    chmod +x /usr/bin/caddy; \
-    caddy version
+	apkArch="$(apk --print-arch)"; \
+	case "$apkArch" in \
+		x86_64)  binArch='amd64'; checksum='eed413b035ffacedfaf751a8431285c5d9a0a81a2a861444f4b95dd4c7508eabe2f3fcba6c5b8e6c70e30c9351dfa96ba39def47fa0879334d965dae3a869f1a' ;; \
+		armhf)   binArch='armv6'; checksum='72ab7c0bd627415cafcf3cc1adebdff0dcb2bb8f81e8969da356f741ae91289c231e20b29dbe268d501f252402adde151dcf7f3acfaf886c0b2dc02143fe5c01' ;; \
+		armv7)   binArch='armv7'; checksum='de8cb9cfb7d81e822d06ab55059d76dd285ed6d9b2861cd7ee5334622cf5938c61e0f0efcc4c6ccff0847b1c485752c670aa8d672fce5ca36edfd9c0714dc40c' ;; \
+		aarch64) binArch='arm64'; checksum='6513d40365c0570ff72c751db2d5f898d4ee9abe9241e73c3ad1062e21128745071b4efd3cc3443fc04fae2da49b69f06f70aadbe79d6a5327cc677fb86fb982' ;; \
+		ppc64el|ppc64le) binArch='ppc64le'; checksum='0341763653017b530a7b0137b6d1296101b21bec7a81b6320ed70479c342dc671d8a538dc07913b9b834e798b95097b4d9190986a296eed7f1a612bfa33fd752' ;; \
+		s390x)   binArch='s390x'; checksum='3d9779898401cbf37c3e5f1cfdbe253739340f2446d464e421db063c674e6a0ca355ae3c2a8374454ef470eed13f17493b40d259d3073775843bd5a1e47a7dc6' ;; \
+		*) echo >&2 "error: unsupported architecture ($apkArch)"; exit 1 ;;\
+	esac; \
+	wget -O /tmp/caddy.tar.gz "https://github.com/caddyserver/caddy/releases/download/v2.6.4/caddy_2.6.4_linux_${binArch}.tar.gz"; \
+	echo "$checksum  /tmp/caddy.tar.gz" | sha512sum -c; \
+	tar x -z -f /tmp/caddy.tar.gz -C /usr/bin caddy; \
+	rm -f /tmp/caddy.tar.gz; \
+	setcap cap_net_bind_service=+ep /usr/bin/caddy; \
+	chmod +x /usr/bin/caddy; \
+	caddy version
 
 # Disabled Temporarily Because of this issue: {
 # executor failed running [/bin/sh -c [ ! -e /etc/nsswitch.conf ] && echo 'hosts: files dns' > /etc/nsswitch.conf]: exit code: 1
@@ -49,12 +53,12 @@ RUN set -eux; \
 ENV XDG_CONFIG_HOME /config
 ENV XDG_DATA_HOME /data
 
-LABEL org.opencontainers.image.version=v2.6.2
-LABEL org.opencontainers.image.title=Caddy
+LABEL org.opencontainers.image.version=v2.6.4
+LABEL org.opencontainers.image.title=Noddy
 LABEL org.opencontainers.image.description="a powerful, enterprise-ready, open source web server with automatic HTTPS written in Go"
 LABEL org.opencontainers.image.url="https://github.com/Leask/alpine-caddy-nodejs"
 LABEL org.opencontainers.image.documentation="https://github.com/Leask/alpine-caddy-nodejs"
-LABEL org.opencontainers.image.vendor="Light Code Labs, @LeaskH"
+LABEL org.opencontainers.image.vendor="Light Code Labs, Node.js, @LeaskH"
 LABEL org.opencontainers.image.licenses=Apache-2.0
 LABEL org.opencontainers.image.source="https://github.com/Leask/alpine-caddy-nodejs"
 
